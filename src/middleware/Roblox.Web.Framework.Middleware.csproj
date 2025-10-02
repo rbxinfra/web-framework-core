@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+	<PropertyGroup>
+        <Description>Shared middleware for web framework</Description>
+
+        <Version>1.2.7</Version>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<FrameworkReference Include="Microsoft.AspNetCore.App" />
+	</ItemGroup>
+
+	<ItemGroup>
+        <PackageReference Include="Roblox.Web.Metrics" Version="1.2.7" />
+        <PackageReference Include="Roblox.Web.Throttling" Version="1.2.7" />
+        <PackageReference Include="Roblox.Web.Maintenance" Version="1.2.7" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<PackageReference Include="prometheus-net.AspNetCore" Version="8.2.1" />
+	</ItemGroup>
+</Project>

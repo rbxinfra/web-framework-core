@@ -1,0 +1,27 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+        <Description>Web framework for services, shared code for both gRPC and HTTP services.</Description>
+
+        <Version>1.2.7</Version>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<FrameworkReference Include="Microsoft.AspNetCore.App" />
+	</ItemGroup>
+
+	<ItemGroup>
+        <PackageReference Include="Roblox.ApplicationContext" Version="1.2.4" />
+        <PackageReference Include="Roblox.ApplicationTelemetry" Version="1.2.4" />
+        <PackageReference Include="Roblox.EventLog" Version="1.2.4" />
+        <PackageReference Include="Roblox.Api.ControlPlane" Version="1.2.4" />
+        <PackageReference Include="Roblox.Service.ApiControlPlane" Version="1.2.4" />
+        <PackageReference Include="Roblox.Http.Client.ApiControlPlane" Version="1.2.4" />
+
+        <PackageReference Include="Roblox.Web.RequestContext.ServiceContextLoader" Version="1.2.7" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<PackageReference Include="prometheus-net.AspNetCore" Version="8.2.1" />
+	</ItemGroup>
+</Project>

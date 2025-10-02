@@ -1,0 +1,30 @@
+<Project Sdk="Microsoft.NET.Sdk">
+    <PropertyGroup>
+        <Description>Web framework for HTTP services</Description>
+
+        <Version>1.2.7</Version>
+    </PropertyGroup>
+	
+    <ItemGroup>
+        <PackageReference Include="Microsoft.AspNetCore.Mvc.NewtonsoftJson" Version="8.0.7" />
+    </ItemGroup>
+
+	<ItemGroup>
+		<FrameworkReference Include="Microsoft.AspNetCore.App" />
+	</ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\..\common\Roblox.Web.Framework.Common.csproj" />
+        <ProjectReference Include="..\..\middleware\Roblox.Web.Framework.Middleware.csproj" />
+        <ProjectReference Include="..\services\Roblox.Web.Framework.Services.csproj" />
+
+        <PackageReference Include="Roblox.EventLog" Version="1.2.4" />
+        <PackageReference Include="Roblox.Operations" Version="1.2.4" />
+        <PackageReference Include="Roblox.Instrumentation" Version="1.2.4" />
+        <PackageReference Include="Roblox.Serialization.Json" Version="1.2.4" />
+        <PackageReference Include="Roblox.Api.ControlPlane" Version="1.2.4" />
+        <PackageReference Include="Roblox.Service.ApiControlPlane" Version="1.2.4" />
+        <PackageReference Include="Roblox.Web.Documentation.Services" Version="1.2.7" />
+        <PackageReference Include="Roblox.Operations.Monitoring" Version="1.2.4" />
+    </ItemGroup>
+</Project>

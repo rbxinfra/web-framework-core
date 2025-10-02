@@ -1,0 +1,58 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{8FEFED38-1488-4AC5-A042-20912BCDEBCA}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Roblox.Web.Framework.Common", "src\common\Roblox.Web.Framework.Common.csproj", "{C081E6B6-3CA0-45EF-9B09-0D29EF2473F4}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Roblox.Web.Framework.Middleware", "src\middleware\Roblox.Web.Framework.Middleware.csproj", "{0D22E71D-6561-420D-A285-712153B34580}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "services", "services", "{0E92193D-CE59-4FA6-BFD1-29C262D21073}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Roblox.Web.Framework.Services.Grpc", "src\services\grpc\Roblox.Web.Framework.Services.Grpc.csproj", "{E4AAA43A-8079-47C7-8697-26BBE5E81E0A}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Roblox.Web.Framework.Services.Http", "src\services\http\Roblox.Web.Framework.Services.Http.csproj", "{65134D7F-F883-4130-9791-B86036512C34}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Roblox.Web.Framework.Services", "src\services\services\Roblox.Web.Framework.Services.csproj", "{CF827782-D660-4AEF-B79A-60453900D303}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{C081E6B6-3CA0-45EF-9B09-0D29EF2473F4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C081E6B6-3CA0-45EF-9B09-0D29EF2473F4}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C081E6B6-3CA0-45EF-9B09-0D29EF2473F4}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C081E6B6-3CA0-45EF-9B09-0D29EF2473F4}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0D22E71D-6561-420D-A285-712153B34580}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0D22E71D-6561-420D-A285-712153B34580}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0D22E71D-6561-420D-A285-712153B34580}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0D22E71D-6561-420D-A285-712153B34580}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E4AAA43A-8079-47C7-8697-26BBE5E81E0A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E4AAA43A-8079-47C7-8697-26BBE5E81E0A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E4AAA43A-8079-47C7-8697-26BBE5E81E0A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E4AAA43A-8079-47C7-8697-26BBE5E81E0A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{65134D7F-F883-4130-9791-B86036512C34}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{65134D7F-F883-4130-9791-B86036512C34}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{65134D7F-F883-4130-9791-B86036512C34}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{65134D7F-F883-4130-9791-B86036512C34}.Release|Any CPU.Build.0 = Release|Any CPU
+		{CF827782-D660-4AEF-B79A-60453900D303}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{CF827782-D660-4AEF-B79A-60453900D303}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{CF827782-D660-4AEF-B79A-60453900D303}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{CF827782-D660-4AEF-B79A-60453900D303}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{C081E6B6-3CA0-45EF-9B09-0D29EF2473F4} = {8FEFED38-1488-4AC5-A042-20912BCDEBCA}
+		{0D22E71D-6561-420D-A285-712153B34580} = {8FEFED38-1488-4AC5-A042-20912BCDEBCA}
+		{0E92193D-CE59-4FA6-BFD1-29C262D21073} = {8FEFED38-1488-4AC5-A042-20912BCDEBCA}
+		{E4AAA43A-8079-47C7-8697-26BBE5E81E0A} = {0E92193D-CE59-4FA6-BFD1-29C262D21073}
+		{65134D7F-F883-4130-9791-B86036512C34} = {0E92193D-CE59-4FA6-BFD1-29C262D21073}
+		{CF827782-D660-4AEF-B79A-60453900D303} = {0E92193D-CE59-4FA6-BFD1-29C262D21073}
+	EndGlobalSection
+EndGlobal

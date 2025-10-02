@@ -1,0 +1,21 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+        <Description>Web framework for gRPC services</Description>
+
+        <Version>1.2.7</Version>
+	</PropertyGroup>
+
+	<ItemGroup>
+	    <PackageReference Include="Grpc.AspNetCore" Version="2.64.0" />
+	</ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Roblox.Operations" Version="1.2.4" />
+        <PackageReference Include="Roblox2.GrpcPrometheus" Version="1.2.4" />
+        <PackageReference Include="Roblox.Operations.Monitoring" Version="1.2.4" />
+
+	  <ProjectReference Include="..\services\Roblox.Web.Framework.Services.csproj" />
+	</ItemGroup>
+
+</Project>
