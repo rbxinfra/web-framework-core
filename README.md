@@ -1,8 +1,12 @@
-# Vault
+# Web Framework Core
 
 ## Overview
 
-This assembly just provides a factory for creating a [Vault](https://www.vaultproject.io/) client that is automatically configured with the appropriate TLS settings and authentication.
+Core assemblies for implementing both gRPC and HTTP Web APIS.
+
+### Services
+
+There are currently 2 types of services available, HTTP (BEDEV1) and gRPC (BEDEV2)
 
 # Notice
 

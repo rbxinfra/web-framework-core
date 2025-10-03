@@ -2,4 +2,4 @@
 /scripts/ @rbxinfra/platform-ci
 
 CODEOWNERS @rbxinfra/library-maintainers
-/src/ @rbxinfra/library-maintainers
+/src/ @rbxinfra/micro-services-platform @rbxinfra/web-platform-maintainers @rbxinfra/web-api-platform
