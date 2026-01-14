@@ -98,14 +98,14 @@ public class OperationExecutor : IOperationExecutor
     
     private const string DefaultErrorMessage = "Internal Error Occurred";
 
-    private static IActionResult BuildErrorResult(OperationError operationError)
+    private static HttpStatusCodeResult BuildErrorResult(OperationError operationError)
     {
         var statusCode = 400;
         var message = operationError.Message ?? operationError.Code?.ToString() ?? DefaultErrorMessage;
 
         if (operationError.Code == null) return new HttpStatusCodeResult(statusCode, message);
         
-        var statusCodeAttribute = operationError.Code.GetType().GetCustomAttribute<HttpStatusCodeAttribute>();
+        var statusCodeAttribute = operationError.Code.GetType().GetField(operationError.Code.ToString())?.GetCustomAttribute<HttpStatusCodeAttribute>();
         if (statusCodeAttribute != null)
             statusCode = statusCodeAttribute.StatusCode;
 
