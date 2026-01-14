@@ -3,7 +3,7 @@
 	<PropertyGroup>
         <Description>Web framework for services, shared code for both gRPC and HTTP services.</Description>
 
-        <Version>1.2.7</Version>
+        <Version>1.2.8</Version>
 	</PropertyGroup>
 
 	<ItemGroup>
@@ -16,7 +16,7 @@
         <PackageReference Include="Roblox.EventLog" Version="1.2.4" />
         <PackageReference Include="Roblox.Api.ControlPlane" Version="1.2.4" />
         <PackageReference Include="Roblox.Service.ApiControlPlane" Version="1.2.4" />
-        <PackageReference Include="Roblox.Http.Client.ApiControlPlane" Version="1.2.4" />
+        <PackageReference Include="Roblox.Http.Client.ApiControlPlane" Version="1.2.5" />
 
         <PackageReference Include="Roblox.Web.RequestContext.ServiceContextLoader" Version="1.2.7" />
 	</ItemGroup>
