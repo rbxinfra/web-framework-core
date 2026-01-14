@@ -2,7 +2,7 @@
     <PropertyGroup>
         <Description>Common objects for web framework</Description>
 
-        <Version>1.2.7</Version>
+        <Version>1.2.8</Version>
     </PropertyGroup>
 
     <ItemGroup>

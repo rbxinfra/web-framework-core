@@ -4,8 +4,9 @@ namespace Roblox.Web.Framework.Services.Grpc;
 
 using System;
 using System.Threading;
+using System.Reflection;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Mvc;
+using System.Diagnostics.CodeAnalysis;
 
 using Operations;
 
@@ -15,8 +16,7 @@ public class OperationExecutor : IOperationExecutor
     /// <inheritdoc cref="IOperationExecutor.Execute(IOperation)"/>
     public void Execute(IOperation action)
     {
-        if (action == null)
-            throw new ArgumentNullException(nameof(action));
+        ArgumentNullException.ThrowIfNull(action);
 
         var error = action.Execute();
         if (error == null) return;
@@ -27,8 +27,7 @@ public class OperationExecutor : IOperationExecutor
     /// <inheritdoc cref="IOperationExecutor.Execute{TInput}(IOperation{TInput}, TInput)"/>
     public void Execute<TInput>(IOperation<TInput> action, TInput input)
     {
-        if (action == null)
-            throw new ArgumentNullException(nameof(action));
+        ArgumentNullException.ThrowIfNull(action);
 
         var error = action.Execute(input);
         if (error == null) return;
@@ -39,8 +38,7 @@ public class OperationExecutor : IOperationExecutor
     /// <inheritdoc cref="IOperationExecutor.Execute{TOutput}(IResultOperation{TOutput})"/>
     public TOutput Execute<TOutput>(IResultOperation<TOutput> operation)
     {
-        if (operation == null)
-            throw new ArgumentNullException(nameof(operation));
+        ArgumentNullException.ThrowIfNull(operation);
 
         var (data, operationError) = operation.Execute();
         if (operationError == null) return data;
@@ -53,8 +51,7 @@ public class OperationExecutor : IOperationExecutor
     /// <inheritdoc cref="IOperationExecutor.Execute{TInput,TOutput}(IResultOperation{TInput,TOutput}, TInput)"/>
     public TOutput Execute<TInput, TOutput>(IResultOperation<TInput, TOutput> operation, TInput input)
     {
-        if (operation == null)
-            throw new ArgumentNullException(nameof(operation));
+        ArgumentNullException.ThrowIfNull(operation);
 
         var (data, operationError) = operation.Execute(input);
         if (operationError == null) return data;
@@ -67,8 +64,7 @@ public class OperationExecutor : IOperationExecutor
     /// <inheritdoc cref="IOperationExecutor.ExecuteAsync(IAsyncOperation, CancellationToken)"/>
     public async Task ExecuteAsync(IAsyncOperation action, CancellationToken cancellationToken)
     {
-        if (action == null)
-            throw new ArgumentNullException(nameof(action));
+        ArgumentNullException.ThrowIfNull(action);
 
         var error = await action.ExecuteAsync(cancellationToken).ConfigureAwait(false);
         if (error == null) return;
@@ -79,8 +75,7 @@ public class OperationExecutor : IOperationExecutor
     /// <inheritdoc cref="IOperationExecutor.ExecuteAsync{TInput}(IAsyncOperation{TInput}, TInput, CancellationToken)"/>
     public async Task ExecuteAsync<TInput>(IAsyncOperation<TInput> action, TInput input, CancellationToken cancellationToken)
     {
-        if (action == null)
-            throw new ArgumentNullException(nameof(action));
+        ArgumentNullException.ThrowIfNull(action);
 
         var error = await action.ExecuteAsync(input, cancellationToken).ConfigureAwait(false);
         if (error == null) return;
@@ -91,8 +86,7 @@ public class OperationExecutor : IOperationExecutor
     /// <inheritdoc cref="IOperationExecutor.ExecuteAsync{TOutput}(IAsyncResultOperation{TOutput}, CancellationToken)"/>
     public async Task<TOutput> ExecuteAsync<TOutput>(IAsyncResultOperation<TOutput> operation, CancellationToken cancellationToken)
     {
-        if (operation == null)
-            throw new ArgumentNullException(nameof(operation));
+        ArgumentNullException.ThrowIfNull(operation);
 
         var (data, operationError) = await operation.ExecuteAsync(cancellationToken).ConfigureAwait(false);
         if (operationError == null) return data;
@@ -105,8 +99,7 @@ public class OperationExecutor : IOperationExecutor
     /// <inheritdoc cref="IOperationExecutor.ExecuteAsync{TInput,TOutput}(IAsyncResultOperation{TInput,TOutput}, TInput, CancellationToken)"/>
     public async Task<TOutput> ExecuteAsync<TInput, TOutput>(IAsyncResultOperation<TInput, TOutput> operation, TInput input, CancellationToken cancellationToken)
     {
-        if (operation == null)
-            throw new ArgumentNullException(nameof(operation));
+        ArgumentNullException.ThrowIfNull(operation);
 
         var (data, operationError) = await operation.ExecuteAsync(input, cancellationToken).ConfigureAwait(false);
         if (operationError == null) return data;
@@ -116,11 +109,21 @@ public class OperationExecutor : IOperationExecutor
         return default(TOutput);
     }
 
-    private static IActionResult ThrowError(OperationError operationError)
+    private const string DefaultErrorMessage = "Internal Error Occurred";
+
+    [DoesNotReturn]
+    private static void ThrowError(OperationError operationError)
     {
-        var message = operationError.Message ?? operationError.Code;
+        var statusCode = grpc::StatusCode.InvalidArgument;
+        var message = operationError.Message ?? operationError.Code?.ToString() ?? DefaultErrorMessage;
+
+        if (operationError.Code == null) throw new grpc::RpcException(new grpc::Status(statusCode, message));
+        
+        var grpcCodeAttribute = operationError.Code.GetType().GetCustomAttribute<GrpcStatusCodeAttribute>();
+        if (grpcCodeAttribute != null)
+            statusCode = grpcCodeAttribute.StatusCode;
 
         // Message is the status description.
-        throw new grpc::RpcException(new grpc::Status(grpc::StatusCode.InvalidArgument, message));
+        throw new grpc::RpcException(new grpc::Status(statusCode, message));
     }
 }

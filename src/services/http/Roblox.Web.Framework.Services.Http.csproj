@@ -2,7 +2,7 @@
     <PropertyGroup>
         <Description>Web framework for HTTP services</Description>
 
-        <Version>1.2.7</Version>
+        <Version>1.2.8</Version>
     </PropertyGroup>
 	
     <ItemGroup>
@@ -19,7 +19,7 @@
         <ProjectReference Include="..\services\Roblox.Web.Framework.Services.csproj" />
 
         <PackageReference Include="Roblox.EventLog" Version="1.2.4" />
-        <PackageReference Include="Roblox.Operations" Version="1.2.4" />
+        <PackageReference Include="Roblox.Operations" Version="1.2.5" />
         <PackageReference Include="Roblox.Instrumentation" Version="1.2.4" />
         <PackageReference Include="Roblox.Serialization.Json" Version="1.2.4" />
         <PackageReference Include="Roblox.Api.ControlPlane" Version="1.2.4" />

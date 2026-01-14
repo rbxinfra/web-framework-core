@@ -1,3 +1,5 @@
+using System.Reflection;
+
 namespace Roblox.Web.Framework.Services.Http;
 
 using System;
@@ -11,37 +13,30 @@ using Framework.Common;
 /// <inheritdoc cref="IOperationExecutor"/>
 public class OperationExecutor : IOperationExecutor
 {
+    private static readonly HttpStatusCodeResult OkResult = new(200);
+    
     /// <inheritdoc cref="IOperationExecutor.Execute(IOperation)"/>
     public IActionResult Execute(IOperation action)
     {
-        if (action == null)
-            throw new ArgumentNullException(nameof(action));
+        ArgumentNullException.ThrowIfNull(action);
 
         var error = action.Execute();
-        if (error != null)
-            return BuildErrorResult(error);
-
-        return new NoContentResult();
+        return error != null ? BuildErrorResult(error) : OkResult;
     }
 
     /// <inheritdoc cref="IOperationExecutor.Execute{TInput}(IOperation{TInput}, TInput)"/>
     public IActionResult Execute<TInput>(IOperation<TInput> action, TInput input)
     {
-        if (action == null)
-            throw new ArgumentNullException(nameof(action));
+        ArgumentNullException.ThrowIfNull(action);
 
         var error = action.Execute(input);
-        if (error != null)
-            return BuildErrorResult(error);
-
-        return new NoContentResult();
+        return error != null ? BuildErrorResult(error) : OkResult;
     }
 
     /// <inheritdoc cref="IOperationExecutor.Execute{TOutput}(IResultOperation{TOutput})"/>
     public IActionResult Execute<TOutput>(IResultOperation<TOutput> operation)
     {
-        if (operation == null)
-            throw new ArgumentNullException(nameof(operation));
+        ArgumentNullException.ThrowIfNull(operation);
 
         var (data, operationError) = operation.Execute();
         return BuildPayloadResult(data, operationError);
@@ -50,8 +45,7 @@ public class OperationExecutor : IOperationExecutor
     /// <inheritdoc cref="IOperationExecutor.Execute{TInput,TOutput}(IResultOperation{TInput,TOutput}, TInput)"/>
     public IActionResult Execute<TInput, TOutput>(IResultOperation<TInput, TOutput> operation, TInput input)
     {
-        if (operation == null)
-            throw new ArgumentNullException(nameof(operation));
+        ArgumentNullException.ThrowIfNull(operation);
 
         var (data, operationError) = operation.Execute(input);
         return BuildPayloadResult(data, operationError);
@@ -60,34 +54,25 @@ public class OperationExecutor : IOperationExecutor
     /// <inheritdoc cref="IOperationExecutor.ExecuteAsync(IAsyncOperation, CancellationToken)"/>
     public async Task<IActionResult> ExecuteAsync(IAsyncOperation action, CancellationToken cancellationToken)
     {
-        if (action == null)
-            throw new ArgumentNullException(nameof(action));
+        ArgumentNullException.ThrowIfNull(action);
 
         var error = await action.ExecuteAsync(cancellationToken).ConfigureAwait(false);
-        if (error != null)
-            return BuildErrorResult(error);
-
-        return new NoContentResult();
+        return error != null ? BuildErrorResult(error) : OkResult;
     }
 
     /// <inheritdoc cref="IOperationExecutor.ExecuteAsync{TInput}(IAsyncOperation{TInput}, TInput, CancellationToken)"/>
     public async Task<IActionResult> ExecuteAsync<TInput>(IAsyncOperation<TInput> action, TInput input, CancellationToken cancellationToken)
     {
-        if (action == null)
-            throw new ArgumentNullException(nameof(action));
+        ArgumentNullException.ThrowIfNull(action);
 
         var error = await action.ExecuteAsync(input, cancellationToken).ConfigureAwait(false);
-        if (error != null)
-            return BuildErrorResult(error);
-
-        return new NoContentResult();
+        return error != null ? BuildErrorResult(error) : OkResult;
     }
 
     /// <inheritdoc cref="IOperationExecutor.ExecuteAsync{TOutput}(IAsyncResultOperation{TOutput}, CancellationToken)"/>
     public async Task<IActionResult> ExecuteAsync<TOutput>(IAsyncResultOperation<TOutput> operation, CancellationToken cancellationToken)
     {
-        if (operation == null)
-            throw new ArgumentNullException(nameof(operation));
+        ArgumentNullException.ThrowIfNull(operation);
 
         var (data, operationError) = await operation.ExecuteAsync(cancellationToken).ConfigureAwait(false);
         return BuildPayloadResult(data, operationError);
@@ -96,8 +81,7 @@ public class OperationExecutor : IOperationExecutor
     /// <inheritdoc cref="IOperationExecutor.ExecuteAsync{TInput,TOutput}(IAsyncResultOperation{TInput,TOutput}, TInput, CancellationToken)"/>
     public async Task<IActionResult> ExecuteAsync<TInput, TOutput>(IAsyncResultOperation<TInput, TOutput> operation, TInput input, CancellationToken cancellationToken)
     {
-        if (operation == null)
-            throw new ArgumentNullException(nameof(operation));
+        ArgumentNullException.ThrowIfNull(operation);
 
         var (data, operationError) = await operation.ExecuteAsync(input, cancellationToken).ConfigureAwait(false);
         return BuildPayloadResult(data, operationError);
@@ -111,12 +95,21 @@ public class OperationExecutor : IOperationExecutor
         var payload = new Payload<TData>(data);
         return new JsonResult(payload);
     }
+    
+    private const string DefaultErrorMessage = "Internal Error Occurred";
 
     private static IActionResult BuildErrorResult(OperationError operationError)
     {
-        var message = operationError.Message ?? operationError.Code;
+        var statusCode = 400;
+        var message = operationError.Message ?? operationError.Code?.ToString() ?? DefaultErrorMessage;
+
+        if (operationError.Code == null) return new HttpStatusCodeResult(statusCode, message);
+        
+        var statusCodeAttribute = operationError.Code.GetType().GetCustomAttribute<HttpStatusCodeAttribute>();
+        if (statusCodeAttribute != null)
+            statusCode = statusCodeAttribute.StatusCode;
 
         // Message is the status description.
-        return new HttpStatusCodeResult(400, message);
+        return new HttpStatusCodeResult(statusCode, message);
     }
 }

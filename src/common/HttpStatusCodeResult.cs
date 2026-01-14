@@ -19,7 +19,7 @@ public class HttpStatusCodeResult : ActionResult
     /// </summary>
     /// <param name="statusCode">The status code.</param>
     /// <param name="reasonPhrase">The reason phrase.</param>
-    public HttpStatusCodeResult(int statusCode, string reasonPhrase)
+    public HttpStatusCodeResult(int statusCode, string reasonPhrase = null)
     {
         StatusCode = statusCode;
         ReasonPhrase = reasonPhrase;
@@ -38,11 +38,13 @@ public class HttpStatusCodeResult : ActionResult
     /// <inheritdoc/>
     public override void ExecuteResult(ActionContext context)
     {
-        ArgumentNullException.ThrowIfNull(context, nameof(context));
+        ArgumentNullException.ThrowIfNull(context);
 
         var response = context.HttpContext.Response;
 
         response.StatusCode = StatusCode;
-        context.HttpContext.Features.Get<IHttpResponseFeature>().ReasonPhrase = ReasonPhrase;
+        
+        if (!string.IsNullOrEmpty(ReasonPhrase))
+            context.HttpContext.Features.Get<IHttpResponseFeature>().ReasonPhrase = ReasonPhrase;
     }
 }

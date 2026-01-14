@@ -65,7 +65,7 @@ public abstract class HttpStartupBase : StartupBase
     {
         base.ConfigureServices(services);
 
-	services.Configure<ApiBehaviorOptions>(options =>
+	    services.Configure<ApiBehaviorOptions>(options =>
         {
             options.SuppressModelStateInvalidFilter = true;
             options.SuppressConsumesConstraintForFormFileParameters = true;
@@ -129,6 +129,6 @@ public abstract class HttpStartupBase : StartupBase
     /// <returns>The <see cref="IApiKeyParser"/></returns>
     protected virtual IApiKeyParser ConfigureApiKeyParser(IServiceCollection services)
     {
-        return new ApiKeyParser(true);
+        return new ApiKeyParser();
     }
 }

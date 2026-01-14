@@ -35,6 +35,7 @@ public class ValidateApiKeyAttribute : ActionFilterAttribute
     private const string _ApiClientHttpContextKey = "ApiClient";
     private const string _UnknownHttpMetricsApplicationName = "Unknown";
     private const string _HttpMetricsApplicationNameHeader = "Roblox-Application-Name";
+    private const string _UnknownClientMessage = "API Key was passed but isn't associated with a known client";
 
     private static readonly Type _AnonymousAttributeType = typeof(AllowAnonymousAttribute);
     private static readonly ConcurrentDictionary<string, PerOperationApiKeyPerformanceMonitor> _PerOperationApiKeyPerformanceMonitors = new();
@@ -136,32 +137,28 @@ public class ValidateApiKeyAttribute : ActionFilterAttribute
             return;
         }
 
-        var performanceMonitor = _PerOperationApiKeyPerformanceMonitors.GetOrAdd(actionName, name => new(_CounterRegistry, name));
+        var performanceMonitor = _PerOperationApiKeyPerformanceMonitors.GetOrAdd(actionName, new PerOperationApiKeyPerformanceMonitor(_CounterRegistry, actionName));
 
         var (validated, statusMessage) = TryValidateApiKey(serviceName, actionName, actionContext, performanceMonitor, out var client);
-        if (!validated)
-        {
-            ReturnStatus(actionContext, HttpStatusCode.Unauthorized, statusMessage);
-            return;
-        }
+        if (validated) return;
+        
+        ReturnStatus(actionContext, HttpStatusCode.Unauthorized, statusMessage);
     }
 
     private static bool ShouldValidateApiKey(ActionExecutingContext actionContext)
     {
-        if (actionContext.ActionDescriptor is ControllerActionDescriptor controllerActionDescriptor)
-        {
-            var allowAnonymousAttributes = controllerActionDescriptor.MethodInfo.GetCustomAttributes(
-                attributeType: _AnonymousAttributeType,
-                inherit: true).ToList();
+        if (actionContext.ActionDescriptor is not ControllerActionDescriptor controllerActionDescriptor) return true;
+        
+        var allowAnonymousAttributes = controllerActionDescriptor.MethodInfo.GetCustomAttributes(
+            attributeType: _AnonymousAttributeType,
+            inherit: true).ToList();
 
-            allowAnonymousAttributes.AddRange(controllerActionDescriptor.ControllerTypeInfo.GetCustomAttributes(
-                attributeType: _AnonymousAttributeType,
-                inherit: true));
+        allowAnonymousAttributes.AddRange(controllerActionDescriptor.ControllerTypeInfo.GetCustomAttributes(
+            attributeType: _AnonymousAttributeType,
+            inherit: true));
 
-            return allowAnonymousAttributes.Count == 0;
-        }
+        return allowAnonymousAttributes.Count == 0;
 
-        return true;
     }
 
 
@@ -183,7 +180,7 @@ public class ValidateApiKeyAttribute : ActionFilterAttribute
                     _UnauthorizedApiKeyCounter.WithLabels(operationName).Inc();
                     performanceMonitor.UnauthorizedApiKeys.Increment();
 
-                    return (false, $"Client ({client?.Note}) is not authorized for {operationName} (on service: {serviceName})");
+                    return (false, $"Client ({client?.Note ?? _UnknownClientMessage}) is not authorized for {operationName} (on service: {serviceName})");
                 }
 
                 _AuthorizedApiKeyCounter.WithLabels(operationName, GetApplicationName(actionContext), client.Note).Inc();
@@ -200,10 +197,9 @@ public class ValidateApiKeyAttribute : ActionFilterAttribute
                 _UnauthorizedApiKeyCounter.WithLabels(operationName).Inc();
                 performanceMonitor.UnauthorizedApiKeys.Increment();
 
-                if (_Settings.VerboseErrorsEnabled)
-                    throw new ApplicationException("An error occurred while validating the API key, check inner exception.", ex);
-                else
-                    return (false, $"Client () is not authorized for {operationName} (on service: {serviceName})");
+                return _Settings.VerboseErrorsEnabled ? 
+                    throw new ApplicationException("An error occurred while validating the API key, check inner exception.", ex) 
+                    : (false, $"Client ({_UnknownClientMessage}) is not authorized for {operationName} (on service: {serviceName})");
             }
         }
 

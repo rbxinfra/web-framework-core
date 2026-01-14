@@ -18,11 +18,9 @@ public class ApiKeyParser : IApiKeyParser
     /// <inheritdoc cref="IApiKeyParser.TryParseApiKey"/>
     public bool TryParseApiKey(grpc::ServerCallContext request, out Guid apiKey)
     {
-        apiKey = default;
+        apiKey = Guid.Empty;
 
         var metadata = request.RequestHeaders.Get(ApiKeyHeaderName);
-        if (metadata == null) return false;
-
-        return Guid.TryParse(metadata.Value, out apiKey);
+        return metadata != null && Guid.TryParse(metadata.Value, out apiKey);
     }
 }
