@@ -1,0 +1,11 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/common/Roblox.Web.Framework.Common.csproj" />
+    <Project Path="src/middleware/Roblox.Web.Framework.Middleware.csproj" />
+  </Folder>
+  <Folder Name="/src/services/">
+    <Project Path="src/services/grpc/Roblox.Web.Framework.Services.Grpc.csproj" />
+    <Project Path="src/services/http/Roblox.Web.Framework.Services.Http.csproj" />
+    <Project Path="src/services/services/Roblox.Web.Framework.Services.csproj" />
+  </Folder>
+</Solution>
