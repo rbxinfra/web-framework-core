@@ -99,7 +99,7 @@ jobs:
           -p:SymbolPackageFormat=snupkg
 
       # Finish
-      - name: Upload build artifacts
+      - name: Upload release build artifacts
         continue-on-error: true
         if: ${{ github.event_name == 'push' }}
         uses: actions/upload-artifact@v4
@@ -122,7 +122,7 @@ jobs:
             ./dist/debug/*.snupkg
 
   # Upload to NuGet (production feed - master pushes only)
-  upload:
+  upload-prod:
     runs-on: "rbx-local"
     needs: "build"
     if: ${{ github.event_name == 'push' }}
@@ -141,7 +141,7 @@ jobs:
       - name: Publish NuGet Packages
         run: >-
           dotnet nuget push
-          dist/release/*.nupkg
+          dist/*.nupkg
           --skip-duplicate
           --source ${{ vars.NUGET_SOURCE }}
           --api-key ${{ secrets.NUGET_API_KEY }}
@@ -170,7 +170,7 @@ jobs:
       - name: Publish NuGet Packages to Dev Feed
         run: >-
           dotnet nuget push
-          dist/debug/*.nupkg
+          dist/*.nupkg
           --skip-duplicate
           --source ${{ vars.DEV_NUGET_SOURCE }}
           --api-key ${{ secrets.DEV_NUGET_API_KEY }}
