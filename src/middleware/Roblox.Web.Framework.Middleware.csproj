@@ -2,7 +2,7 @@
 	<PropertyGroup>
         <Description>Shared middleware for web framework</Description>
 
-        <Version>1.2.7</Version>
+        <VersionPrefix>1.2.7</VersionPrefix>
 	</PropertyGroup>
 
 	<ItemGroup>

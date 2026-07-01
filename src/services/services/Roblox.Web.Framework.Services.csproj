@@ -3,7 +3,7 @@
 	<PropertyGroup>
         <Description>Web framework for services, shared code for both gRPC and HTTP services.</Description>
 
-        <Version>1.2.8</Version>
+        <VersionPrefix>1.2.8</VersionPrefix>
 	</PropertyGroup>
 
 	<ItemGroup>

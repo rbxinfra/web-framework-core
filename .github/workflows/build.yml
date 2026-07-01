@@ -85,6 +85,7 @@ jobs:
           dotnet build
           --no-restore
           -c Debug
+          -p:VersionSuffix=dev
 
       - name: Pack Debug NuGet Packages
         run: >-
