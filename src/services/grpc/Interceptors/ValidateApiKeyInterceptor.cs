@@ -35,9 +35,6 @@ public class ValidateApiKeyInterceptor : grpc_interceptors::Interceptor
     private readonly ICounterRegistry _CounterRegistry;
     private readonly IServiceSettings _Settings;
 
-    private const string _ApiClientUserStateKey = "ApiClient";
-    private const string _UnknownHttpMetricsApplicationName = "Unknown";
-    private const string _ApplicationNameHeader = "Roblox-Application-Name";
     private const string _UnknownClientMessage = "API Key was passed but isn't associated with a known client";
 
     private static readonly Type _AnonymousAttributeType = typeof(AllowAnonymousAttribute);
@@ -188,9 +185,6 @@ public class ValidateApiKeyInterceptor : grpc_interceptors::Interceptor
         return allowAnonymousAttributes.Count == 0;
     }
 
-    private static string GetApplicationName(ServerCallContext context)
-        => context.RequestHeaders.Get(_ApplicationNameHeader)?.Value ?? _UnknownHttpMetricsApplicationName;
-
     private void ValidateApiKey(string serviceName, string operationName, ServerCallContext context, PerOperationApiKeyPerformanceMonitor performanceMonitor)
     {
         if (
@@ -207,13 +201,16 @@ public class ValidateApiKeyInterceptor : grpc_interceptors::Interceptor
                     _UnauthorizedApiKeyCounter.WithLabels(operationName).Inc();
                     performanceMonitor.UnauthorizedApiKeys.Increment();
 
-                    throw new RpcException(new(StatusCode.PermissionDenied, $"ApiKey ({client?.Note ?? _UnknownClientMessage}) is not authorized for service {serviceName} or operation {operationName} in ApiControlPlane."));
+                    throw new RpcException(new(
+                        StatusCode.PermissionDenied, 
+                        $"ApiKey ({client?.Note ?? _UnknownClientMessage}) is not authorized for service {serviceName} or operation {operationName} in ApiControlPlane.")
+                    );
                 }
 
-                _AuthorizedApiKeyCounter.WithLabels(operationName, GetApplicationName(context), client.Note).Inc();
+                _AuthorizedApiKeyCounter.WithLabels(operationName, context.GetRequestingApplicationName(), client.Note).Inc();
                 performanceMonitor.AuthorizedApiKeys.Increment();
 
-                context.UserState.Add(_ApiClientUserStateKey, client);
+                context.SetCurrentApiClient(client);
 
                 return;
             }
@@ -225,15 +222,24 @@ public class ValidateApiKeyInterceptor : grpc_interceptors::Interceptor
                 performanceMonitor.UnauthorizedApiKeys.Increment();
 
                 if (_Settings.VerboseErrorsEnabled)
-                    throw new RpcException(new(StatusCode.Internal, "An error occurred while validating the API key, check inner exception.", ex));
+                    throw new RpcException(new(
+                        StatusCode.Internal, 
+                        "An error occurred while validating the API key, check inner exception.", ex
+                    ));
                 
-                throw new RpcException(new(StatusCode.PermissionDenied, $"ApiKey ({_UnknownClientMessage}) is not authorized for service {serviceName} or operation {operationName} in ApiControlPlane."));
+                throw new RpcException(new(
+                    StatusCode.PermissionDenied, 
+                    $"ApiKey ({_UnknownClientMessage}) is not authorized for service {serviceName} or operation {operationName} in ApiControlPlane."
+                ));
             }
         }
 
         _UnauthorizedApiKeyCounter.WithLabels(operationName).Inc();
         performanceMonitor.UnauthorizedApiKeys.Increment();
 
-        throw new RpcException(new(StatusCode.Unauthenticated, $"API key ({ApiKeyParser.ApiKeyHeaderName}) not specified in request to {serviceName} ({operationName})"));
+        throw new RpcException(new(
+            StatusCode.Unauthenticated, 
+            $"API key ({ApiKeyParser.ApiKeyHeaderName}) not specified in request to {serviceName} ({operationName})"
+        ));
     }
 }
