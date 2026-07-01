@@ -5,6 +5,7 @@ using System.Net;
 using System.Linq;
 using System.Collections.Concurrent;
 
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc.Controllers;
@@ -13,12 +14,11 @@ using Prometheus;
 
 using EventLog;
 using Instrumentation;
-using Framework.Common;
 using ApplicationContext;
 
+using Operations;
 using Api.ControlPlane;
 using Operations.Monitoring;
-using Roblox.Service.ApiControlPlane;
 
 /// <summary>
 /// An <see cref="ActionFilterAttribute"/> that validates an Api Key
@@ -31,11 +31,6 @@ public class ValidateApiKeyAttribute : ActionFilterAttribute
     private readonly ILogger _Logger;
     private readonly ICounterRegistry _CounterRegistry;
     private readonly IServiceSettings _Settings;
-
-    private const string _ApiClientHttpContextKey = "ApiClient";
-    private const string _UnknownHttpMetricsApplicationName = "Unknown";
-    private const string _HttpMetricsApplicationNameHeader = "Roblox-Application-Name";
-    private const string _UnknownClientMessage = "API Key was passed but isn't associated with a known client";
 
     private static readonly Type _AnonymousAttributeType = typeof(AllowAnonymousAttribute);
     private static readonly ConcurrentDictionary<string, PerOperationApiKeyPerformanceMonitor> _PerOperationApiKeyPerformanceMonitors = new();
@@ -104,9 +99,9 @@ public class ValidateApiKeyAttribute : ActionFilterAttribute
         Validate(context);
     }
 
-    private static void ReturnStatus(ActionExecutingContext context, HttpStatusCode statusCode, string reasonPhrase)
+    private static void ReturnStatus(ActionExecutingContext context, HttpStatusCode statusCode, OperationError operationError)
     {
-        context.Result = new HttpStatusCodeResult((int)statusCode, reasonPhrase);
+        context.Result = new JsonResult(operationError) { StatusCode = (int)statusCode };
     }
 
     private void Validate(ActionExecutingContext actionContext)
@@ -127,19 +122,19 @@ public class ValidateApiKeyAttribute : ActionFilterAttribute
 
         if (!_Authority.ServiceIsEnabled(serviceName))
         {
-            ReturnStatus(actionContext, HttpStatusCode.ServiceUnavailable, $"Service ({serviceName}) is disabled.");
+            ReturnStatus(actionContext, HttpStatusCode.ServiceUnavailable, new(ApiControlPlaneErrors.ServiceDisabled, serviceName));
             return;
         }
 
         if (!_Authority.OperationIsEnabled(serviceName, actionName))
         {
-            ReturnStatus(actionContext, HttpStatusCode.ServiceUnavailable, $"Operation ({actionName}) is disabled (on service: {serviceName})");
+            ReturnStatus(actionContext, HttpStatusCode.ServiceUnavailable, new(ApiControlPlaneErrors.OperationDisabled, actionName, serviceName));
             return;
         }
 
         var performanceMonitor = _PerOperationApiKeyPerformanceMonitors.GetOrAdd(actionName, new PerOperationApiKeyPerformanceMonitor(_CounterRegistry, actionName));
 
-        var (validated, statusMessage) = TryValidateApiKey(serviceName, actionName, actionContext, performanceMonitor, out var client);
+        var (validated, statusMessage) = TryValidateApiKey(serviceName, actionName, actionContext, performanceMonitor);
         if (validated) return;
         
         ReturnStatus(actionContext, HttpStatusCode.Unauthorized, statusMessage);
@@ -162,10 +157,8 @@ public class ValidateApiKeyAttribute : ActionFilterAttribute
     }
 
 
-    private (bool, string) TryValidateApiKey(string serviceName, string operationName, ActionExecutingContext actionContext, PerOperationApiKeyPerformanceMonitor performanceMonitor, out IApiClient client)
+    private (bool, OperationError) TryValidateApiKey(string serviceName, string operationName, ActionExecutingContext actionContext, PerOperationApiKeyPerformanceMonitor performanceMonitor)
     {
-        client = default(IApiClient);
-
         if (
             _ApiKeyParser.TryParseApiKey(
                 actionContext.HttpContext.Request,
@@ -175,18 +168,21 @@ public class ValidateApiKeyAttribute : ActionFilterAttribute
         {
             try
             {
-                if (!_Authority.IsAuthorized(apiKey, serviceName, operationName, out client))
+                if (!_Authority.IsAuthorized(apiKey, serviceName, operationName, out var client))
                 {
                     _UnauthorizedApiKeyCounter.WithLabels(operationName).Inc();
                     performanceMonitor.UnauthorizedApiKeys.Increment();
 
-                    return (false, $"Client ({client?.Note ?? _UnknownClientMessage}) is not authorized for {operationName} (on service: {serviceName})");
+                    if (client == null)
+                        return (false, new OperationError(ApiControlPlaneErrors.ApiKeyUnauthorizedForService, serviceName, operationName));
+
+                    return (false, new OperationError(ApiControlPlaneErrors.ApiKeyUnauthorizedForOperation, client.Note, operationName, serviceName));
                 }
 
-                _AuthorizedApiKeyCounter.WithLabels(operationName, GetApplicationName(actionContext), client.Note).Inc();
+                _AuthorizedApiKeyCounter.WithLabels(operationName, actionContext.HttpContext.GetRequestingApplicationName(), client.Note).Inc();
                 performanceMonitor.AuthorizedApiKeys.Increment();
 
-                actionContext.HttpContext.Items.Add(_ApiClientHttpContextKey, client);
+                actionContext.HttpContext.SetCurrentApiClient(client);
 
                 return (true, default);
             }
@@ -199,21 +195,13 @@ public class ValidateApiKeyAttribute : ActionFilterAttribute
 
                 return _Settings.VerboseErrorsEnabled ? 
                     throw new ApplicationException("An error occurred while validating the API key, check inner exception.", ex) 
-                    : (false, $"Client ({_UnknownClientMessage}) is not authorized for {operationName} (on service: {serviceName})");
+                    : (false, new OperationError(ApiControlPlaneErrors.ApiKeyUnauthorizedForService, serviceName, operationName));
             }
         }
 
         _UnauthorizedApiKeyCounter.WithLabels(operationName).Inc();
         performanceMonitor.UnauthorizedApiKeys.Increment();
 
-        return (false, $"API key ({ApiKeyParser.ApiKeyHeaderName}) not specified in request to {serviceName} ({operationName})");
-    }
-
-    private static string GetApplicationName(ActionExecutingContext actionExecutingContext)
-    {
-        if (!actionExecutingContext.HttpContext.Request.Headers.TryGetValue(_HttpMetricsApplicationNameHeader, out var headers))
-            return _UnknownHttpMetricsApplicationName;
-
-        return headers.FirstOrDefault() ?? _UnknownHttpMetricsApplicationName;
+        return (false, new OperationError(ApiControlPlaneErrors.ApiKeyUnspecified, serviceName, operationName));
     }
 }

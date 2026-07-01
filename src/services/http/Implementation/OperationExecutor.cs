@@ -96,20 +96,26 @@ public class OperationExecutor : IOperationExecutor
         return new JsonResult(payload);
     }
     
-    private const string DefaultErrorMessage = "Internal Error Occurred";
-
-    private static HttpStatusCodeResult BuildErrorResult(OperationError operationError)
+    /// <summary>
+    /// Builds a <see cref="JsonResult"/> from an <see cref="OperationError"/>.
+    /// </summary>
+    /// <remarks>
+    /// Before this used to set the reason phrase of the response to the <see cref="OperationError.Message"/>. 
+    /// This is doesn't make sense anymore for HTTP/2 and HTTP/3, so we just return the <see cref="OperationError"/> as the response body
+    /// as it has Json attributes to ignore the <see cref="OperationError.Message"/> if it is null or empty.
+    /// </remarks>
+    private static JsonResult BuildErrorResult(OperationError operationError)
     {
         var statusCode = 400;
-        var message = operationError.Message ?? operationError.Code?.ToString() ?? DefaultErrorMessage;
 
-        if (operationError.Code == null) return new HttpStatusCodeResult(statusCode, message);
+        if (operationError.Code != null)
+        {
+            var statusCodeAttribute = operationError.Code.GetType().GetField(operationError.Code.ToString())?.GetCustomAttribute<HttpStatusCodeAttribute>();
+            if (statusCodeAttribute != null)
+                statusCode = statusCodeAttribute.StatusCode;
+        }
         
-        var statusCodeAttribute = operationError.Code.GetType().GetField(operationError.Code.ToString())?.GetCustomAttribute<HttpStatusCodeAttribute>();
-        if (statusCodeAttribute != null)
-            statusCode = statusCodeAttribute.StatusCode;
-
         // Message is the status description.
-        return new HttpStatusCodeResult(statusCode, message);
+        return new JsonResult(operationError) { StatusCode = statusCode };
     }
 }
