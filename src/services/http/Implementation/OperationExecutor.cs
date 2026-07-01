@@ -116,6 +116,6 @@ public class OperationExecutor : IOperationExecutor
         }
         
         // Message is the status description.
-        return new JsonResult(operationError) { StatusCode = statusCode };
+        return new JsonResult(new { error = operationError }) { StatusCode = statusCode };
     }
 }

@@ -101,7 +101,7 @@ public class ValidateApiKeyAttribute : ActionFilterAttribute
 
     private static void ReturnStatus(ActionExecutingContext context, HttpStatusCode statusCode, OperationError operationError)
     {
-        context.Result = new JsonResult(operationError) { StatusCode = (int)statusCode };
+        context.Result = new JsonResult(new { error = operationError }) { StatusCode = (int)statusCode };
     }
 
     private void Validate(ActionExecutingContext actionContext)
