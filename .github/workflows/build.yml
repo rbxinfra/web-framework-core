@@ -75,7 +75,7 @@ jobs:
           dotnet pack
           --no-build
           --no-restore
-          --output ./release
+          --output ./dist
           -c Release
           -p:IncludeSymbols=true
           -p:SymbolPackageFormat=snupkg
