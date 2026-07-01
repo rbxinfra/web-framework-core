@@ -1,5 +1,4 @@
 name: "Build + Publish NuGet Package"
-
 on:
   pull_request:
     types: [opened, synchronize]
@@ -8,7 +7,6 @@ on:
       - ".github/workflows/**"
       - "*.sln"
       - "*.slnx"
-
   push:
     branches:
       - master
@@ -24,17 +22,14 @@ env:
 jobs:
   get-head-commit-message:
     runs-on: "ubuntu-latest"
-
     outputs:
-     head-commit-message: ${{ steps.get-head-commit-details.outputs.head-commit }}
-
+      head-commit-message: ${{ steps.get-head-commit-details.outputs.head-commit }}
     steps:
       # Setup
       - name: Checkout
         uses: actions/checkout@v4
         with:
           ref: ${{ github.event.pull_request.head.sha }}
-
       - name: Get Head Commit message
         id: get-head-commit-details
         run: >
@@ -47,17 +42,13 @@ jobs:
   build:
     runs-on: "rbx-local" # Due to local NuGet
     if: ${{ !contains(needs.get-head-commit-message.outputs.head-commit-message, '#!skip-build!#') }}
-
     needs: get-head-commit-message
-
     env:
       VersionSuffix: ${{ github.event.pull_request.number && format('pr-{0}-{1}-{2}-preview', github.event.pull_request.number, github.run_number, github.run_attempt) || '' }}
-
     steps:
       # Setup
       - name: Checkout
         uses: actions/checkout@v4
-
       - name: Setup .NET 10
         uses: actions/setup-dotnet@v4
         with:
@@ -68,7 +59,7 @@ jobs:
         run: >-
           dotnet restore
 
-      - name: Build Solution
+      - name: Build Solution (Release)
         run: >-
           dotnet build
           --no-restore
@@ -86,48 +77,103 @@ jobs:
           dotnet pack
           --no-build
           --no-restore
-          --output ./dist
+          --output ./dist/release
           -c Release
+          -p:IncludeSymbols=true
+          -p:SymbolPackageFormat=snupkg
+
+      - name: Build Solution (Debug)
+        run: >-
+          dotnet build
+          --no-restore
+          -c Debug
+
+      - name: Pack Debug NuGet Packages
+        run: >-
+          dotnet pack
+          --no-build
+          --no-restore
+          --output ./dist/debug
+          -c Debug
+          -p:IncludeSymbols=true
+          -p:SymbolPackageFormat=snupkg
 
       # Finish
       - name: Upload build artifacts
-        if: ${{ github.event_name == 'push' }}
         continue-on-error: true
+        if: ${{ github.event_name == 'push' }}
         uses: actions/upload-artifact@v4
         with:
           retention-days: 1
-          name: nuget-packages
+          name: release-nuget-packages
           path: |
-            ./dist/*.nupkg
+            ./dist/release/*.nupkg
+            ./dist/release/*.snupkg
 
-  # Upload to NuGet
+      - name: Upload debug build artifacts
+        continue-on-error: true
+        if: ${{ github.event_name == 'push' }}
+        uses: actions/upload-artifact@v4
+        with:
+          retention-days: 1
+          name: debug-nuget-packages
+          path: |
+            ./dist/debug/*.nupkg
+            ./dist/debug/*.snupkg
+
+  # Upload to NuGet (production feed - master pushes only)
   upload:
     runs-on: "rbx-local"
-
     needs: "build"
-
     if: ${{ github.event_name == 'push' }}
-
     steps:
       # Setup
       - name: Setup .NET 6
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: "6.0.x"
-
       - name: Download build artifacts
         uses: actions/download-artifact@v4
         with:
-          name: nuget-packages
+          name: release-nuget-packages
           path: dist
 
       - name: Publish NuGet Packages
         run: >-
           dotnet nuget push
-          dist/*.nupkg
+          dist/release/*.nupkg
           --skip-duplicate
           --source ${{ vars.NUGET_SOURCE }}
           --api-key ${{ secrets.NUGET_API_KEY }}
+
+      - name: Clean up
+        run: >-
+          rm -rf dist
+
+  # Upload to development NuGet feed (only if configured)
+  upload-dev:
+    runs-on: "rbx-local"
+    needs: "build"
+    if: ${{ vars.DEV_NUGET_SOURCE != '' && github.event_name == 'push' }}
+    steps:
+      # Setup
+      - name: Setup .NET 6
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "6.0.x"
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: debug-nuget-packages
+          path: dist
+
+      - name: Publish NuGet Packages to Dev Feed
+        run: >-
+          dotnet nuget push
+          dist/debug/*.nupkg
+          --skip-duplicate
+          --source ${{ vars.DEV_NUGET_SOURCE }}
+          --api-key ${{ secrets.DEV_NUGET_API_KEY }}
 
       - name: Clean up
         run: >-
