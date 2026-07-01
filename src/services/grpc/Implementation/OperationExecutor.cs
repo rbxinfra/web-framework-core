@@ -119,11 +119,19 @@ public class OperationExecutor : IOperationExecutor
 
         if (operationError.Code == null) throw new grpc::RpcException(new grpc::Status(statusCode, message));
         
+
+        var withDetails = true;
         var grpcCodeAttribute = operationError.Code.GetType().GetField(operationError.Code.ToString())?.GetCustomAttribute<GrpcStatusCodeAttribute>();
         if (grpcCodeAttribute != null)
+        {
             statusCode = grpcCodeAttribute.StatusCode;
+            withDetails = grpcCodeAttribute.WithDetails;
+        }
 
         // Message is the status description.
-        throw new grpc::RpcException(new grpc::Status(statusCode, message));
+        if (withDetails)
+            throw new grpc::RpcException(new grpc::Status(statusCode, message), message);
+        else
+            throw new grpc::RpcException(new grpc::Status(statusCode, string.Empty), message);
     }
 }

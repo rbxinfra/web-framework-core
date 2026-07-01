@@ -97,25 +97,32 @@ public class OperationExecutor : IOperationExecutor
     }
     
     /// <summary>
-    /// Builds a <see cref="JsonResult"/> from an <see cref="OperationError"/>.
+    /// Builds a <see cref="ActionResult"/> from an <see cref="OperationError"/>.
     /// </summary>
     /// <remarks>
     /// Before this used to set the reason phrase of the response to the <see cref="OperationError.Message"/>. 
     /// This is doesn't make sense anymore for HTTP/2 and HTTP/3, so we just return the <see cref="OperationError"/> as the response body
     /// as it has Json attributes to ignore the <see cref="OperationError.Message"/> if it is null or empty.
     /// </remarks>
-    private static JsonResult BuildErrorResult(OperationError operationError)
+    private static ActionResult BuildErrorResult(OperationError operationError)
     {
+        var withDetails = true;
         var statusCode = 400;
 
         if (operationError.Code != null)
         {
             var statusCodeAttribute = operationError.Code.GetType().GetField(operationError.Code.ToString())?.GetCustomAttribute<HttpStatusCodeAttribute>();
             if (statusCodeAttribute != null)
+            {
                 statusCode = statusCodeAttribute.StatusCode;
+                withDetails = statusCodeAttribute.WithDetails;
+            }
         }
         
         // Message is the status description.
+        if (!withDetails)
+            return new StatusCodeResult(statusCode);
+        
         return new JsonResult(new { error = operationError }) { StatusCode = statusCode };
     }
 }

@@ -17,6 +17,12 @@ public class GrpcStatusCodeAttribute : Attribute
     public grpc::StatusCode StatusCode { get; }
 
     /// <summary>
+    /// Gets or sets a value indicating whether to include the details of the <see cref="Operations.OperationError"/> in the gRPC response. 
+    /// Defaults to true.
+    /// </summary>
+    public bool WithDetails { get; set; } = true;
+
+    /// <summary>
     /// Construct a new instance of <see cref="GrpcStatusCodeAttribute"/>
     /// </summary>
     /// <param name="statusCode">The <see cref="grpc::StatusCode"/>, by default <see cref="grpc::StatusCode.InvalidArgument"/></param>
